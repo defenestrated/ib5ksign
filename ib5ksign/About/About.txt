@@ -1,0 +1,15 @@
+ 	
+	embedXcode
+	embedXcode+
+	----------------------------------
+	Embedded Computing on Xcode
+	
+	
+	© Rei VILO, 2010-2014
+	All rights reserved	
+	http://embedXcode.weebly.com/
+	
+	
+embedXcode  • Apr 16, 2014 release 148 • Fix for project name and path
+embedXcode+ • Apr 16, 2014 release 148 • Fix for project with spaces in name or path
+	
