@@ -1,20 +1,4 @@
-//
-// File			LocalLibrary.h
-// Brief		Library header
-//
-// Project	 	ib5ksign
-// Developed with [embedXcode](http://embedXcode.weebly.com)
-// 
-// Author		Sam Galison
-// 				Sam Galison
-// Date			4/16/14 2:57 PM
-// Version		<#version#>
-// 
-// Copyright	© Sam Galison, 2014
-// License		<#license#>
-//
-// See			ReadMe.txt for references
-//
+
 
 
 // Core library - IDE-based
@@ -41,15 +25,6 @@
 #ifndef ib5ksign_LocalLibrary_h
 #define ib5ksign_LocalLibrary_h
 
-//
-// Brief	Blink a LED
-// Details	LED attached to pin is light on then light off
-// Total cycle duration = ms
-// Parameters:
-//      pin pin to which the LED is attached
-//      times number of times
-//      ms cycle duration in ms
-//
-void blink(uint8_t pin, uint8_t times, uint16_t ms);
+
 
 #endif
