@@ -33,19 +33,31 @@ int smsum1 = 0, smsum2 = 0;
 
 unsigned int framecount;
 int spinner = 0;
+int pulsedir = 1;
 
 const uint8_t sonar = A0;
 const uint8_t adjust = A1;
 
 // timers:
-unsigned long start;
+unsigned long waitstart;
 
 int pinOffset = 1; // offset if you don't start at 0
 int ledpins[numLEDs];
 int currValues[numLEDs];
 int dist8bit, pdist;
 
-
+void smooth() {
+    smsum1 -= smarr1[smix1];
+    smarr1[smix1] = analogRead(sonar);
+    smsum1 += smarr1[smix1];
+    smix1 ++;
+    if (smix1 >= smoothing) smix1 = 0;
+    smsum2 -= smarr2[smix2];
+    smarr2[smix2] = analogRead(adjust);
+    smsum2 += smarr2[smix2];
+    smix2 ++;
+    if (smix2 >= smoothing) smix2 = 0;
+}
 
 void tSET (int channel, int value) {
     for (int i = 0; i < numLEDs; i++) {
@@ -61,24 +73,18 @@ int tGET ( int channel ) {
 
 void inc (int pin, int amt) {
     // increment an led's brightness
-    
-    if (tGET(pin) < (4095-amt)) {
-        tSET(pin, tGET(pin) + amt);
-    }
-    else tSET(pin, 4095);
+    tSET(pin, tGET(pin) + amt);
 }
 
 void dec (int pin, int amt) {
     // decrement an led's brightness
-    if (tGET(pin) > (amt)) {
-        tSET(pin, tGET(pin) - amt);
-    }
-    else tSET(pin, 0);
+    tSET(pin, tGET(pin) - amt);
 }
 
 void spin( int slowness, int spread, int max, int min) {
     
     if (spread >= float(numLEDs/2)) {
+        // prettyifying hack in case the spread is too big
         min = max/2;
         spread = int(floor(numLEDs/2));
     }
@@ -107,23 +113,48 @@ void spin( int slowness, int spread, int max, int min) {
     }
 }
 
+void pulse( int speed, int wait) {
+    // this should work for uniform + non-uniform
+    // although speed is still constant (could be randomized per channel)
+    for (int i = 0; i < numLEDs; i++) {
+        if (pulsedir == 1 && millis()-waitstart > wait) {
+            if (tGET(i) < max_brightness - speed)
+                inc(i, speed);
+            else {
+                tSET(i, max_brightness);
+                pulsedir = -1;
+            }
+        }
+            
+        else if (pulsedir == -1 && millis()-waitstart > wait) {
+            if (tGET(i) > max_brightness + speed)
+                dec(i, speed);
+            else {
+                waitstart = millis();
+                tSET(i, 0);
+                pulsedir = 1;
+            }
+        }
+    }
+}
+
 void setup()
 {
-    /* Call Tlc.init() to setup the tlc.
-     You can optionally pass an initial PWM value (0 - 4095) for all channels.*/
     Serial.println("=== setting up ===");
-    start = millis();
-    framecount = 0;
     
-    min_dist = 0.02;
+    framecount = 0; // set / reset framecount
+    
+    min_dist = 0.02; // minimum distance cutoff (currently not a scale factor)
  
-    pdist = 99999999;
+    pdist = 4; // random non-zero value, will be reset immediately
     
     for (int i=0; i<smoothing; i++) {
+        // fill smoothing arrays with 0
         smarr1[i] = 0;
         smarr2[i] = 0;
     }
-    
+
+    // utility to start at a pin other than 0
     if (dbg) Serial.print("using pins ");
     for (int i = 0; i < numLEDs; i++) {
         ledpins[i] = i + pinOffset;
@@ -145,10 +176,12 @@ void setup()
 void loop()
 {
     framecount++;
-            if (dbg && idle) Serial.println(" ::: idling :::");
+    if (dbg && idle) Serial.println(" ::: idling :::");
     
     if (framecount >= pow(2, 32) - 100) setup();
+    // if frame count is nearing overflow
     
+    // check for idle:
     if (dist8bit == 0) {
         if (framecount % idle_time == 0) {
             if (dist8bit == pdist && dist8bit == 0) {
@@ -162,33 +195,21 @@ void loop()
         }
     }
     else idle = false;
+
+    smooth();
+    // figure out smoothed values
     
-    smsum2 -= smarr2[smix2];
-    smarr2[smix2] = analogRead(adjust);
-    smsum2 += smarr2[smix2];
-    smix2 ++;
-    if (smix2 >= smoothing) smix2 = 0;
-    
-    float adj = (smsum2 / smoothing) / 1023.0f * 0.2f;
-    if (dbg) {
-//        Serial.print("max distance: ");
-//        Serial.print( adj, DEC );
-    }
-    max_dist = adj; // longest possible distance in current space. adjustable by pot on pin adjust
-    
-    smsum1 -= smarr1[smix1];
-    smarr1[smix1] = analogRead(sonar);
-    smsum1 += smarr1[smix1];
-    smix1 ++;
-    if (smix1 >= smoothing) smix1 = 0;
+    max_dist = (smsum2 / smoothing) / 1023.0f * 0.2f;
+    // longest possible distance in current space. adjustable by pot on pin adjust
     
     float read = smsum1 / smoothing;
+    // smoothed distance reading
     
-    float proximity =  read/1023;
-    float frac = proximity / max_dist;
-    frac = constrain(frac, min_dist, 1);
-    dist8bit = int((1-frac)*255);
-    analogWrite(5, dist8bit);
+    float proximity =  read/1023;           // 0-1 absolute distance
+    float frac = proximity / max_dist;      // 0-1 scaled distance
+    frac = constrain(frac, min_dist, 1);    // apply minimum distance cutoff
+    dist8bit = int((1-frac)*255);           // 8 bit (0-255) distance value
+    analogWrite(5, dist8bit);               // indicator LED
     
 
     
