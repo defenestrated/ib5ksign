@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>E310B854-CF56-44B0-BFD7-DB6385049685</string>
+	<key>IDESourceControlProjectName</key>
+	<string>ib5ksign</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>15A6431F-39D6-4819-939A-2C4E69BD691E</key>
+		<string>https://github.com/defenestrated/ib5ksign.git</string>
+		<key>9F2C9E81-5544-4D3B-B52C-0BD585D2283C</key>
+		<string>https://github.com/adafruit/RTClib.git</string>
+		<key>EE78107D-5A1C-4D85-8681-81706EAE27DE</key>
+		<string>https://github.com/adafruit/RTClib.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>ib5ksign.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>15A6431F-39D6-4819-939A-2C4E69BD691E</key>
+		<string>../..</string>
+		<key>9F2C9E81-5544-4D3B-B52C-0BD585D2283C</key>
+		<string>../../../libraries/RTClib_backup</string>
+		<key>EE78107D-5A1C-4D85-8681-81706EAE27DE</key>
+		<string>../../../libraries/RTClib</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/defenestrated/ib5ksign.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>15A6431F-39D6-4819-939A-2C4E69BD691E</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>15A6431F-39D6-4819-939A-2C4E69BD691E</string>
+			<key>IDESourceControlWCCName</key>
+			<string>ib5ksign</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>EE78107D-5A1C-4D85-8681-81706EAE27DE</string>
+			<key>IDESourceControlWCCName</key>
+			<string>RTClib</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>9F2C9E81-5544-4D3B-B52C-0BD585D2283C</string>
+			<key>IDESourceControlWCCName</key>
+			<string>RTClib_backup</string>
+		</dict>
+	</array>
+</dict>
+</plist>

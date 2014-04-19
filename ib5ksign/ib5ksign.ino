@@ -11,13 +11,14 @@
 
 /////////////////////////////
 
-boolean dbg = false; // debugging variable, enables serial output.
+boolean dbg = true; // debugging variable, enables serial output.
 
 /////////////////////////////
 
 
 float max_dist;
 float min_dist;
+float read, proximity, frac;
 int max_brightness = 1000;
 int idle_brightness = 500;
 int idle_time = 1000;
@@ -25,18 +26,24 @@ int idlespeed;
 
 boolean idle = false;
 
-const int numLEDs = 11;
-const int smoothing = 100;
+const int numLEDs = 12;
+
+
+const int smoothing = 5;
 int smarr1[smoothing], smarr2[smoothing];
 int smix1 = 0, smix2 = 0;
 int smsum1 = 0, smsum2 = 0;
 
 unsigned int framecount;
 int spinner = 0;
+int tspinner = 0;
+unsigned long spinstart = 0;
 int pulsedir = 1;
 
 const uint8_t sonar = A0;
 const uint8_t adjust = A1;
+
+int indicator = 5;
 
 // timers:
 unsigned long waitstart;
@@ -89,33 +96,30 @@ void spin( int slowness, int spread, int max, int min) {
         spread = int(floor(numLEDs/2));
     }
     
-    if (framecount % slowness == 0) {
+    if (millis() - spinstart > slowness) {
         spinner ++;
-        int cch = spinner % numLEDs;
-        tSET(cch, max);
+        if (spinner == numLEDs) spinner = 0;
+
+        tSET(spinner, max);
+        
         for (int i = 1; i <= spread; i++) {
             float fade = (float(max-min)*(spread-i)/spread) + min;
             int pch = (spinner + i) % numLEDs;
-            int nch = (spinner - i) % numLEDs;
+            int nch;
+            if (spinner - i < 0) nch = numLEDs - i;
+            else nch = spinner - i;
             tSET(pch, int(floor(fade)));
             tSET(nch, int(floor(fade)));
         }
 
-        
-//        if (dbg) {
-//            Serial.print("leds: [ ");
-//            for (int i = 0; i < numLEDs; i++) {
-//                Serial.print(tGET(i));
-//                Serial.print("\t");
-//            }
-//            Serial.println(" ]");
-//        }
+        spinstart = millis();
     }
 }
 
 void pulse( int speed, int wait) {
     // this should work for uniform + non-uniform
     // although speed is still constant (could be randomized per channel)
+    // ...but it's broken.
     for (int i = 0; i < numLEDs; i++) {
         if (pulsedir == 1 && millis()-waitstart > wait) {
             if (tGET(i) < max_brightness - speed)
@@ -140,6 +144,9 @@ void pulse( int speed, int wait) {
 
 void setup()
 {
+    digitalWrite(A0, LOW);
+    if (dbg) Serial.begin(9600);
+    
     Serial.println("=== setting up ===");
     
     framecount = 0; // set / reset framecount
@@ -166,7 +173,6 @@ void setup()
     if (dbg) Serial.println();
     
     Tlc.init();
-    if (dbg) Serial.begin(9600);
     
 }
 
@@ -176,7 +182,7 @@ void setup()
 void loop()
 {
     framecount++;
-    if (dbg && idle) Serial.println(" ::: idling :::");
+//    if (dbg && idle) Serial.println(" ::: idling :::");
     
     if (framecount >= pow(2, 32) - 100) setup();
     // if frame count is nearing overflow
@@ -195,44 +201,55 @@ void loop()
         }
     }
     else idle = false;
+    
 
-    smooth();
+    //    for (int x = 0; x < 4; x++) {
+    //        tSET(x, dist8bit);
+    //    }
+
+    
+
+    //    smooth();
     // figure out smoothed values
     
-    max_dist = (smsum2 / smoothing) / 1023.0f * 0.2f;
-    // longest possible distance in current space. adjustable by pot on pin adjust
+    //    max_dist = (smsum2 / smoothing) / 1023.0f * 0.2f;
+    max_dist = analogRead(A1) / 1023.0f * 0.2f;
+    // longest possible distance in current space. adjustable by pot on pin adjust.
+    // the max dist should be just smaller than the sonar's reading when there's nobody there
     
-    float read = smsum1 / smoothing;
+    //    float read = smsum1 / smoothing;
+    read = analogRead(A0);
     // smoothed distance reading
     
-    float proximity =  read/1023;           // 0-1 absolute distance
-    float frac = proximity / max_dist;      // 0-1 scaled distance
+    proximity =  read/1023;           // 0-1 absolute distance
+    frac = proximity / max_dist;      // 0-1 scaled distance
     frac = constrain(frac, min_dist, 1);    // apply minimum distance cutoff
     dist8bit = int((1-frac)*255);           // 8 bit (0-255) distance value
-    analogWrite(5, dist8bit);               // indicator LED
-    
-
-    
-
+    analogWrite(indicator, dist8bit);               // indicator LED
     
     if (dbg) {
-//        if (dbg) Serial.print( "\tframe " );
-//        if (dbg) Serial.println(framecount);
+        // uncomment this block to calibrate distance
+        Serial.print( framecount );
+        Serial.print( ":" );
+        Serial.print( framecount % 100);
+        Serial.print("\tmax dist: ");
+        Serial.print(max_dist);
+        Serial.print("\treal dist:");
+        Serial.print(proximity);
+        Serial.print("\tcalculated dist: ");
+        Serial.println(dist8bit);
         delay(10);
     }
-    
+        
     int slow = (255-dist8bit);
     int bright = int(frac*max_brightness/2);
-    if (!idle) spin(slow, 2, max_brightness, bright);
-    else if (idle) spin(idlespeed, 4, 250, 100);
-//    for (int i = 0; i < numLEDs; i++) {
-//        tSET(i, 4095);
-//        if (dbg) Serial.print( tGET(i) );
-//        if (dbg) Serial.print("\t");
-//    }
-//    
-//    if (dbg) Serial.println(  );
+//    if (!idle) spin(slow, 2, max_brightness, bright);
+//    else if (idle) spin(idlespeed, 4, 250, 100);
+    
+//    spin(50, 3, 4095, 2000);
+//    tSET(0, dist8bit*4);
 
+    
     
     Tlc.update();
 }
