@@ -11,7 +11,7 @@
 
 /////////////////////////////
 
-boolean dbg = true; // debugging variable, enables serial output.
+boolean dbg = false; // debugging variable, enables serial output.
 
 /////////////////////////////
 
@@ -23,6 +23,10 @@ int max_brightness = 1000;
 int idle_brightness = 500;
 int idle_time = 1000;
 int idlespeed;
+
+long swap = 200;
+long randspinspeed = 50;
+long spindir = 1;
 
 boolean idle = false;
 
@@ -97,8 +101,9 @@ void spin( int slowness, int spread, int max, int min) {
     }
     
     if (millis() - spinstart > slowness) {
-        spinner ++;
+        spinner += spindir;
         if (spinner == numLEDs) spinner = 0;
+        if (spinner == -1) spinner = numLEDs - 1;
 
         tSET(spinner, max);
         
@@ -184,72 +189,84 @@ void loop()
     framecount++;
 //    if (dbg && idle) Serial.println(" ::: idling :::");
     
-    if (framecount >= pow(2, 32) - 100) setup();
-    // if frame count is nearing overflow
-    
-    // check for idle:
-    if (dist8bit == 0) {
-        if (framecount % idle_time == 0) {
-            if (dist8bit == pdist && dist8bit == 0) {
-                idle = true;
-                idlespeed = int(random(50, 100));
-            }
-            else {
-                idle = false;
-                pdist = dist8bit;
-            }
-        }
-    }
-    else idle = false;
-    
-
-    //    for (int x = 0; x < 4; x++) {
-    //        tSET(x, dist8bit);
-    //    }
-
+//    if (framecount >= pow(2, 32) - 100) setup();
+//    // if frame count is nearing overflow
+//    
+//    // check for idle:
+//    if (dist8bit == 0) {
+//        if (framecount % idle_time == 0) {
+//            if (dist8bit == pdist && dist8bit == 0) {
+//                idle = true;
+//                idlespeed = int(random(50, 100));
+//            }
+//            else {
+//                idle = false;
+//                pdist = dist8bit;
+//            }
+//        }
+//    }
+//    else idle = false;
+//
     
 
     //    smooth();
     // figure out smoothed values
     
     //    max_dist = (smsum2 / smoothing) / 1023.0f * 0.2f;
-    max_dist = analogRead(A1) / 1023.0f * 0.2f;
+//    max_dist = analogRead(A1) / 1023.0f * 0.2f;
     // longest possible distance in current space. adjustable by pot on pin adjust.
     // the max dist should be just smaller than the sonar's reading when there's nobody there
     
     //    float read = smsum1 / smoothing;
-    read = analogRead(A0);
-    // smoothed distance reading
-    
-    proximity =  read/1023;           // 0-1 absolute distance
-    frac = proximity / max_dist;      // 0-1 scaled distance
-    frac = constrain(frac, min_dist, 1);    // apply minimum distance cutoff
-    dist8bit = int((1-frac)*255);           // 8 bit (0-255) distance value
-    analogWrite(indicator, dist8bit);               // indicator LED
-    
+//    read = analogRead(A0);
+//    // smoothed distance reading
+//    
+//    proximity =  read/1023;           // 0-1 absolute distance
+//    frac = proximity / max_dist;      // 0-1 scaled distance
+//    frac = constrain(frac, min_dist, 1);    // apply minimum distance cutoff
+//    dist8bit = int((1-frac)*255);           // 8 bit (0-255) distance value
+//    analogWrite(indicator, dist8bit);               // indicator LED
+
     if (dbg) {
         // uncomment this block to calibrate distance
-        Serial.print( framecount );
-        Serial.print( ":" );
-        Serial.print( framecount % 100);
-        Serial.print("\tmax dist: ");
-        Serial.print(max_dist);
-        Serial.print("\treal dist:");
-        Serial.print(proximity);
-        Serial.print("\tcalculated dist: ");
-        Serial.println(dist8bit);
-        delay(10);
+//        Serial.print( framecount );
+//        Serial.print( ":" );
+//        Serial.print( framecount % 100);
+//        Serial.print("\tmax dist: ");
+//        Serial.print(max_dist);
+//        Serial.print("\treal dist:");
+//        Serial.print(proximity);
+//        Serial.print("\tcalculated dist: ");
+//        Serial.println(dist8bit);
     }
-        
-    int slow = (255-dist8bit);
-    int bright = int(frac*max_brightness/2);
+    
+//    int slow = (255-dist8bit);
+//    int bright = int(frac*max_brightness/2);
 //    if (!idle) spin(slow, 2, max_brightness, bright);
 //    else if (idle) spin(idlespeed, 4, 250, 100);
+
     
-//    spin(50, 3, 4095, 2000);
+    
+    if (framecount % swap == 0) {
+        swap = random(10000, 20000);
+        randspinspeed = random(10, 100);
+        spindir = random(2)*2-1;
+        if (dbg) {
+            Serial.print("swapping. next swap in ");
+            Serial.print(swap);
+            Serial.print("\tnew speed: ");
+            Serial.print(randspinspeed);
+            Serial.print("\tdirection: ");
+            Serial.println(spindir);
+        }
+        
+    }
+    spin(randspinspeed, 3, 4095, 500);
 //    tSET(0, dist8bit*4);
 
     
     
     Tlc.update();
+    
+    if (dbg) delay(10);
 }
